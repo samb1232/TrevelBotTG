@@ -7,17 +7,16 @@ from sqlalchemy.orm import sessionmaker, Session
 from database.db_base import db_base
 from database.tables.users import User
 
+logger = logging.getLogger(__name__)
+
 
 class db_helper:
     @staticmethod
     def get_database_session() -> Session:
-        logging.info(f'Создание движка СУБД sqlite3')
         engine = db.create_engine("sqlite:///testdb.db")
 
-        logging.info('Инициализация таблиц')
         db_base.Base.metadata.create_all(engine)
 
-        logging.info('Подключение к базе данных успешно')
         return sessionmaker(bind=engine)()
 
     session = get_database_session()

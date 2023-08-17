@@ -14,7 +14,7 @@ from test_excursion import Test_Excursion
 # Enable logging
 logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO)
 # set higher logging level for httpx to avoid all GET and POST requests being logged
-logging.getLogger("httpx").setLevel(logging.DEBUG)
+logging.getLogger("httpx").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 
@@ -22,7 +22,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a message when the command /start is issued."""
 
     if db_helper.get_user_by_id(update.effective_user.id) is None:
-        logger.debug("Добавление нового пользователя в базу данных")
+        logging.debug("Добавление нового пользователя в базу данных")
 
         db_helper.add_new_user(
                         user_id=update.effective_user.id,
@@ -39,7 +39,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         reply_markup = InlineKeyboardMarkup(keyboard)
         await update.message.reply_text(strings.GREETING_TEXT, reply_markup=reply_markup)
     else:
-        logger.debug("Пользователь обнаружен в базе данных")
+        logging.debug("Пользователь обнаружен в базе данных")
         await main_menu(update, context)
 
 
@@ -135,7 +135,6 @@ async def unknown_comand(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 def main() -> None:
     """Starts the bot."""
-
     # Create the Application
     application = Application.builder().token(config.API_TOKEN).build()
 
