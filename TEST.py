@@ -1,6 +1,34 @@
-import logging
-from typing import Dict
+#!/usr/bin/env python
+# pylint: disable=unused-argument, wrong-import-position
+# This program is dedicated to the public domain under the CC0 license.
 
+"""
+First, a few callback functions are defined. Then, those functions are passed to
+the Application and registered at their respective places.
+Then, the bot is started and runs until we press Ctrl-C on the command line.
+
+Usage:
+Example of a bot-user conversation using ConversationHandler.
+Send /start to initiate the conversation.
+Press Ctrl-C on the command line or send a signal to the process to stop the
+bot.
+"""
+
+import logging
+
+from telegram import __version__ as TG_VER
+
+try:
+    from telegram import __version_info__
+except ImportError:
+    __version_info__ = (0, 0, 0, 0, 0)  # type: ignore[assignment]
+
+if __version_info__ < (20, 0, 0, "alpha", 5):
+    raise RuntimeError(
+        f"This example is not compatible with your current PTB version {TG_VER}. To view the "
+        f"{TG_VER} version of this example, "
+        f"visit https://docs.python-telegram-bot.org/en/v{TG_VER}/examples.html"
+    )
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
 from telegram.ext import (
     Application,
@@ -17,83 +45,107 @@ logging.basicConfig(
 )
 # set higher logging level for httpx to avoid all GET and POST requests being logged
 logging.getLogger("httpx").setLevel(logging.WARNING)
+
 logger = logging.getLogger(__name__)
 
-CHOOSING, TYPING_REPLY, TYPING_CHOICE = range(3)
-
-reply_keyboard = [
-    ["Age", "Favourite colour"],
-    ["Number of siblings", "Something else..."],
-    ["Done"],
-]
-markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
-
-
-def facts_to_str(user_data: Dict[str, str]) -> str:
-    """Helper function for formatting the gathered user info."""
-    facts = [f"{key} - {value}" for key, value in user_data.items()]
-    return "\n".join(facts).join(["\n", "\n"])
+GENDER, PHOTO, LOCATION, BIO = range(4)
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Start the conversation and ask user for input."""
+    """Starts the conversation and asks the user about their gender."""
+    reply_keyboard = [["Boy", "Girl", "Other"]]
+
     await update.message.reply_text(
-        "Hi! My name is Doctor Botter. I will hold a more complex conversation with you. "
-        "Why don't you tell me something about yourself?",
-        reply_markup=markup,
+        "Hi! My name is Professor Bot. I will hold a conversation with you. "
+        "Send /cancel to stop talking to me.\n\n"
+        "Are you a boy or a girl?",
+        reply_markup=ReplyKeyboardMarkup(
+            reply_keyboard, one_time_keyboard=True, input_field_placeholder="Boy or Girl?"
+        ),
     )
 
-    return CHOOSING
+    return GENDER
 
 
-async def regular_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Ask the user for info about the selected predefined choice."""
-    text = update.message.text
-    context.user_data["choice"] = text
-    await update.message.reply_text(f"Your {text.lower()}? Yes, I would love to hear about that!")
-
-    return TYPING_REPLY
-
-
-async def custom_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Ask the user for a description of a custom category."""
+async def gender(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Stores the selected gender and asks for a photo."""
+    user = update.message.from_user
+    logger.info("Gender of %s: %s", user.first_name, update.message.text)
     await update.message.reply_text(
-        'Alright, please send me the category first, for example "Most impressive skill"'
-    )
-
-    return TYPING_CHOICE
-
-
-async def received_information(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Store info provided by user and ask for the next category."""
-    user_data = context.user_data
-    text = update.message.text
-    category = user_data["choice"]
-    user_data[category] = text
-    del user_data["choice"]
-
-    await update.message.reply_text(
-        "Neat! Just so you know, this is what you already told me:"
-        f"{facts_to_str(user_data)}You can tell me more, or change your opinion"
-        " on something.",
-        reply_markup=markup,
-    )
-
-    return CHOOSING
-
-
-async def done(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Display the gathered info and end the conversation."""
-    user_data = context.user_data
-    if "choice" in user_data:
-        del user_data["choice"]
-
-    await update.message.reply_text(
-        f"I learned these facts about you: {facts_to_str(user_data)}Until next time!",
+        "I see! Please send me a photo of yourself, "
+        "so I know what you look like, or send /skip if you don't want to.",
         reply_markup=ReplyKeyboardRemove(),
     )
 
-    user_data.clear()
+    return PHOTO
+
+
+async def photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Stores the photo and asks for a location."""
+    user = update.message.from_user
+    photo_file = await update.message.photo[-1].get_file()
+    await photo_file.download_to_drive("user_photo.jpg")
+    logger.info("Photo of %s: %s", user.first_name, "user_photo.jpg")
+    await update.message.reply_text(
+        "Gorgeous! Now, send me your location please, or send /skip if you don't want to."
+    )
+
+    return LOCATION
+
+
+async def skip_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Skips the photo and asks for a location."""
+    user = update.message.from_user
+    logger.info("User %s did not send a photo.", user.first_name)
+    await update.message.reply_text(
+        "I bet you look great! Now, send me your location please, or send /skip."
+    )
+
+    return LOCATION
+
+
+async def location(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Stores the location and asks for some info about the user."""
+    user = update.message.from_user
+    user_location = update.message.location
+    logger.info(
+        "Location of %s: %f / %f", user.first_name, user_location.latitude, user_location.longitude
+    )
+    await update.message.reply_text(
+        "Maybe I can visit you sometime! At last, tell me something about yourself."
+    )
+
+    return BIO
+
+
+async def skip_location(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Skips the location and asks for info about the user."""
+    user = update.message.from_user
+    logger.info("User %s did not send a location.", user.first_name)
+    await update.message.reply_text(
+        "You seem a bit paranoid! At last, tell me something about yourself."
+    )
+
+    return BIO
+
+
+async def bio(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Stores the info about the user and ends the conversation."""
+    user = update.message.from_user
+    logger.info("Bio of %s: %s", user.first_name, update.message.text)
+    await update.message.reply_text("Thank you! I hope we can talk again some day.")
+
+    return ConversationHandler.END
+
+
+async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Cancels and ends the conversation."""
+    user = update.message.from_user
+    logger.info("User %s canceled the conversation.", user.first_name)
+    await update.message.reply_text(
+        "Bye! I hope we can talk again some day.", reply_markup=ReplyKeyboardRemove()
+    )
+
     return ConversationHandler.END
 
 
@@ -102,29 +154,19 @@ def main() -> None:
     # Create the Application and pass it your bot's token.
     application = Application.builder().token("TOKEN").build()
 
-    # Add conversation handler with the states CHOOSING, TYPING_CHOICE and TYPING_REPLY
+    # Add conversation handler with the states GENDER, PHOTO, LOCATION and BIO
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
-            CHOOSING: [
-                MessageHandler(
-                    filters.Regex("^(Age|Favourite colour|Number of siblings)$"), regular_choice
-                ),
-                MessageHandler(filters.Regex("^Something else...$"), custom_choice),
+            GENDER: [MessageHandler(filters.Regex("^(Boy|Girl|Other)$"), gender)],
+            PHOTO: [MessageHandler(filters.PHOTO, photo), CommandHandler("skip", skip_photo)],
+            LOCATION: [
+                MessageHandler(filters.LOCATION, location),
+                CommandHandler("skip", skip_location),
             ],
-            TYPING_CHOICE: [
-                MessageHandler(
-                    filters.TEXT & ~(filters.COMMAND | filters.Regex("^Done$")), regular_choice
-                )
-            ],
-            TYPING_REPLY: [
-                MessageHandler(
-                    filters.TEXT & ~(filters.COMMAND | filters.Regex("^Done$")),
-                    received_information,
-                )
-            ],
+            BIO: [MessageHandler(filters.TEXT & ~filters.COMMAND, bio)],
         },
-        fallbacks=[MessageHandler(filters.Regex("^Done$"), done)],
+        fallbacks=[CommandHandler("cancel", cancel)],
     )
 
     application.add_handler(conv_handler)

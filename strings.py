@@ -31,6 +31,7 @@ MAIN_MENU_TEXT = "ГЛАВНОЕ МЕНЮ"
 TARIFFS_TEXT = "Тарифы"
 CHOOSE_EXCURSION_TEXT = ("Экскурсии пока не добавлены, но есть тестовая экскурсия! "
                          "Чтобы перейти к ней введи команду /testexc")
+UNKNOWN_COMMAND_TEXT = "непонял тебя..."
 
 # Buttons
 MAIN_MENU_BUTTON_TEXT = "В главное меню"
