@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 class db_helper:
     @staticmethod
     def get_database_session() -> Session:
+        logger.info("Подключение к базе данных")
         engine = db.create_engine("sqlite:///testdb.db")
 
         db_base.Base.metadata.create_all(engine)
@@ -23,6 +24,8 @@ class db_helper:
 
     @staticmethod
     def get_user_by_id(user_id: int) -> User | None:
+
+        logger.info(f"Получение пользователя с id = {user_id} из базы данных")
         return db_helper.session.query(User).filter(User.user_id == user_id).first()
 
     @staticmethod
