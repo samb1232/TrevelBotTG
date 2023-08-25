@@ -29,8 +29,6 @@ ADDITIONAL_TEXT = ("Санкт-Петербург был основан Петр
 
 MAIN_MENU_TEXT = "ГЛАВНОЕ МЕНЮ"
 TARIFFS_TEXT = "Тарифы"
-CHOOSE_EXCURSION_TEXT = ("Экскурсии пока не добавлены, но есть тестовая экскурсия! "
-                         "Чтобы перейти к ней введи команду /testexc")
 UNKNOWN_COMMAND_TEXT = "непонял тебя..."
 
 # Buttons
@@ -39,6 +37,9 @@ START_ADVENTURE_BUTTON_TEXT = "НАЧАТЬ ПРИКЛЮЧЕНИЕ✨"
 ADDITIONAL_BUTTON_TEXT = "Подробнее"
 TARIFFS_BUTTON_TEXT = "Тарифы"
 CHOOSE_EXCURSION_BUTTON_TEXT = "Выбрать экскурсию"
+CHOOSE_OTHER_EXCURSION_BUTTON_TEXT = "Другие экскурсии"
+BEGIN_BUTTON_TEXT = "Начать экскурсию"
+
 
 TARIFF_ONE_BUTTON_TEXT = "Любитель"
 TARIFF_TWO_BUTTON_TEXT = "Турист"

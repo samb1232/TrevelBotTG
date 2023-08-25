@@ -5,6 +5,7 @@ import sqlalchemy as db
 from sqlalchemy.orm import sessionmaker, Session
 
 from database.db_base import db_base
+from database.tables.excursion_test import Excursion_test
 from database.tables.users import User
 
 logger = logging.getLogger(__name__)
@@ -24,12 +25,29 @@ class db_helper:
 
     @staticmethod
     def get_user_by_id(user_id: int) -> User | None:
-
-        logger.info(f"Получение пользователя с id = {user_id} из базы данных")
         return db_helper.session.query(User).filter(User.user_id == user_id).first()
 
     @staticmethod
-    def add_new_user(user_id: int, subscription_type: int, subscription_start_date: Date, excursions_left: int) -> None:
-        new_user = User(user_id, subscription_type, subscription_start_date, excursions_left)
+    def get_excursion_test_by_id(user_id: int) -> Excursion_test | None:
+        return db_helper.session.query(Excursion_test).filter(Excursion_test.user_id == user_id).first()
+
+    @staticmethod
+    def add_new_user(user_id: int, subscription_type: int, subscription_end_date: Date, excursions_left: int) -> None:
+        new_user = User(user_id, subscription_type, subscription_end_date, excursions_left)
+        db_helper.session.add(new_user)
+        db_helper.session.commit()
+
+    @staticmethod
+    def decrease_excursions_left(user_id: int) -> bool:
+        user = db_helper.get_user_by_id(user_id)
+        if user.excursions_left > 0:
+            user.excursions_left -= 1
+            db_helper.session.commit()
+            return True
+        return False
+
+    @staticmethod
+    def add_user_to_excursion_test(user_id: int, progress: int) -> None:
+        new_user = Excursion_test(user_id=user_id, progress=progress)
         db_helper.session.add(new_user)
         db_helper.session.commit()
