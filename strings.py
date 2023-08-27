@@ -39,8 +39,14 @@ TARIFFS_BUTTON_TEXT = "Тарифы"
 CHOOSE_EXCURSION_BUTTON_TEXT = "Выбрать экскурсию"
 CHOOSE_OTHER_EXCURSION_BUTTON_TEXT = "Другие экскурсии"
 BEGIN_BUTTON_TEXT = "Начать экскурсию"
+MY_STATUS_BUTTON_TEXT = "Узнать мой тариф"
 
+NO_TARIFF_TEXT = "Вы ещё не преобретали никакой тариф. Вы можете сделать это через главное меню!"
+TARIFF_EXPIRES_TEXT = "Ваш тариф просрочен. Чтобы получить доступ к экскурсиям, преобретите новый тариф"
+TARIFF_INFO_TEXT_ARR = ["▪️ Ваш тариф: ", "\n▪️ Срок действия тарифа: до ", "\n▪️ Экскурсий осталось: "]
 
-TARIFF_ONE_BUTTON_TEXT = "Любитель"
-TARIFF_TWO_BUTTON_TEXT = "Турист"
-TARIFF_THREE_BUTTON_TEXT = "Гуру"
+TARIFF_ONE_TEXT = "Любитель"
+TARIFF_TWO_TEXT = "Турист"
+TARIFF_THREE_TEXT = "Гуру"
+
+TARIFFS_ARR = [TARIFF_ONE_TEXT, TARIFF_TWO_TEXT, TARIFF_THREE_TEXT]

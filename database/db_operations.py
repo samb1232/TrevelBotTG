@@ -51,3 +51,15 @@ class db_helper:
         new_user = Excursion_test(user_id=user_id, progress=progress)
         db_helper.session.add(new_user)
         db_helper.session.commit()
+
+    @staticmethod
+    def increase_progress_excursion_test(user_id: int):
+        excursion = db_helper.get_excursion_test_by_id(user_id)
+        excursion.progress += 1
+        db_helper.session.commit()
+
+    @staticmethod
+    def reset_progress_excursion_test(user_id: int):
+        excursion = db_helper.get_excursion_test_by_id(user_id)
+        excursion.progress = 0
+        db_helper.session.commit()

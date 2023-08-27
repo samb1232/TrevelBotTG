@@ -3,7 +3,8 @@ class MenuButtonStates:
     CHOOSE_EXCURSION = "choose_excursion"
     ADDITIONAL_INFORMATION = "additional_information"
     TARIFFS = "tariffs"
-    NONE = "_"
+    GET_STATUS = "get_status"
+    NOT_IMPLEMENTED = "_"
 
 
 class ExcursionButtonStates:
@@ -14,6 +15,4 @@ class ExcursionButtonStates:
 
 class ConversationStates:
     MAIN_MENU: int = 0
-    TARIFF_PAYMENT: int = 1
-    EXCURSION: int = 2
-    TEST_EXCURSION: int = 3
+    TEST_EXCURSION: int = 1

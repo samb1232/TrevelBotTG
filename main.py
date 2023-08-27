@@ -28,7 +28,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
         db_helper.add_new_user(
             user_id=update.effective_user.id,
-            subscription_type=0,
+            subscription_type=-1,
             subscription_end_date=datetime.date.min,
             excursions_left=0
         )
@@ -59,18 +59,21 @@ async def buttons_manager(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             await additional_information(update, context)
         case MenuButtonStates.TARIFFS:
             await tariffs(update, context)
-        case MenuButtonStates.NONE:
-            pass
+        case MenuButtonStates.GET_STATUS:
+            await get_tariff_status(update, context)
+        case MenuButtonStates.NOT_IMPLEMENTED:
+            await context.bot.send_message(text="Данная функция находится в разработке...",
+                                           chat_id=update.effective_chat.id)
 
 
 async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    # TODO: Сделать кнопку "Узнать мой тариф"
     keyboard = [
         [
             InlineKeyboardButton(strings.CHOOSE_EXCURSION_BUTTON_TEXT, callback_data=MenuButtonStates.CHOOSE_EXCURSION)
         ],
         [
             InlineKeyboardButton(strings.TARIFFS_BUTTON_TEXT, callback_data=MenuButtonStates.TARIFFS),
+            InlineKeyboardButton(strings.MY_STATUS_BUTTON_TEXT, callback_data=MenuButtonStates.GET_STATUS)
         ],
         [
             InlineKeyboardButton(strings.ADDITIONAL_BUTTON_TEXT, callback_data=MenuButtonStates.ADDITIONAL_INFORMATION)
@@ -81,6 +84,26 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                                    chat_id=update.effective_chat.id,
                                    reply_markup=reply_markup)
     return ConversationStates.MAIN_MENU
+
+
+async def get_tariff_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    reply_markup = InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton(strings.MAIN_MENU_BUTTON_TEXT, callback_data=MenuButtonStates.MAIN_MENU)
+        ],
+    ])
+    user = db_helper.get_user_by_id(update.effective_user.id)
+    if user.subscription_type == -1:
+        text = strings.NO_TARIFF_TEXT
+    elif user.subscription_end_date < datetime.date.today():
+        text = strings.TARIFF_EXPIRES_TEXT
+    else:
+        text = (strings.TARIFF_INFO_TEXT_ARR[0] + strings.TARIFFS_ARR[user.subscription_type] +
+                strings.TARIFF_INFO_TEXT_ARR[1] + user.subscription_end_date.strftime('%Y-%m-%d') +
+                strings.TARIFF_INFO_TEXT_ARR[2] + str(user.excursions_left))
+    await context.bot.send_message(text=text,
+                                   chat_id=update.effective_chat.id,
+                                   reply_markup=reply_markup)
 
 
 async def choose_excursion(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -101,11 +124,12 @@ async def additional_information(update: Update, context: ContextTypes.DEFAULT_T
 
 
 async def tariffs(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # TODO: Реализовать систему тарифов (после оплаты)
     keyboard = [
         [
-            InlineKeyboardButton(strings.TARIFF_ONE_BUTTON_TEXT, callback_data=MenuButtonStates.NONE),
-            InlineKeyboardButton(strings.TARIFF_TWO_BUTTON_TEXT, callback_data=MenuButtonStates.NONE),
-            InlineKeyboardButton(strings.TARIFF_THREE_BUTTON_TEXT, callback_data=MenuButtonStates.NONE)
+            InlineKeyboardButton(strings.TARIFF_ONE_TEXT, callback_data=MenuButtonStates.NOT_IMPLEMENTED),
+            InlineKeyboardButton(strings.TARIFF_TWO_TEXT, callback_data=MenuButtonStates.NOT_IMPLEMENTED),
+            InlineKeyboardButton(strings.TARIFF_THREE_TEXT, callback_data=MenuButtonStates.NOT_IMPLEMENTED)
         ],
         [
             InlineKeyboardButton(strings.MAIN_MENU_BUTTON_TEXT, callback_data=MenuButtonStates.MAIN_MENU)
@@ -138,11 +162,17 @@ def main() -> None:
     main_conversation_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start), MessageHandler(filters.ALL, start)],
         states={
-            ConversationStates.MAIN_MENU: [CommandHandler("start", start),
-                                           CallbackQueryHandler(buttons_manager),
-                                           CommandHandler("testexc", Test_Excursion.go_to_test_excursion),
-                                           MessageHandler(filters.ALL, start)],
-            ConversationStates.TEST_EXCURSION: [CallbackQueryHandler(Test_Excursion.excursion_buttons_manager)]
+            ConversationStates.MAIN_MENU: [
+                CommandHandler("start", start),
+                CallbackQueryHandler(buttons_manager),
+                CommandHandler("testexc", Test_Excursion.go_to_test_excursion),
+                MessageHandler(filters.ALL, start)
+            ],
+            ConversationStates.TEST_EXCURSION: [
+                MessageHandler(filters.TEXT, Test_Excursion.process_waypoints),
+                CallbackQueryHandler(Test_Excursion.excursion_buttons_manager),
+
+            ]
         },
         fallbacks=[]
     )
@@ -155,3 +185,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+# TODO: Сделать систему оповещений о продлении тарифа

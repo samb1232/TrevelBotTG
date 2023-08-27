@@ -1,11 +1,28 @@
-class Waypoint:
-    text: str = None
-    picture_source: str = None
-    audio_source: str = None
-    next_point: str = None
+class Text:
+    __name__ = "TEXT"
 
-    def __init__(self, text: str = None, picture_source: str = None, audio_source: str = None, next_point: str = None) -> None:
+    def __init__(self, text: str):
         self.text = text
+
+
+class Picture:
+    __name__ = "PICTURE"
+
+    def __init__(self, picture_source: str):
         self.picture_source = picture_source
+
+
+class Audio:
+    __name__ = "AUDIO"
+
+    def __init__(self, audio_source: str):
         self.audio_source = audio_source
-        self.next_point = next_point
+
+
+class Waypoint:
+    def __init__(self, components: list, buttons_names: list) -> None:
+        # Check if Waypoint is empty
+        if len(components) == 0 or len(buttons_names) == 0:
+            raise ValueError("Error. An empty waypoint or waypoint without buttons_names cannot be created.")
+        self.components = components.copy()
+        self.buttons_names = buttons_names.copy()
