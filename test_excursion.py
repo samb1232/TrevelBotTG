@@ -28,11 +28,19 @@ class Test_Excursion:
 
     waypoints_array = [
         Waypoint(components=[
-            Text("Первый этап экскурсии. Описание"),
+            Text("Первый этап экскурсии. Подходите к точке 1 на карте. Как будете на месте, смело нажимайте кнопку "
+                 "\"На месте\" "),
             Picture("Excursion1/point1.png"),
             Audio("Excursion1/T1.m4a")
         ],
-            buttons_names=["Дальше"]
+            buttons_names=["На месте"]
+        ),
+
+        Waypoint(components=[
+            Text("Оглянитесь вокруг и найдите лицо героини греческих мифов. Что это за женщина?")
+        ],
+            buttons_names=["Афродита", "Сирена", "Медуза Горгона", "Фемида"],
+            quiz_answer="Медуза Горгона"
         ),
         Waypoint([
             Text("Второй этап экскурсии. Описание 2"),
@@ -127,6 +135,11 @@ class Test_Excursion:
     async def process_waypoints(update: Update, context: ContextTypes.DEFAULT_TYPE):
         excursion_test = db_helper.get_excursion_test_by_id(update.effective_user.id)
 
+        # Fix for potential negative progress number
+        if excursion_test.progress < 0:
+            excursion_test.progress = 0
+            db_helper.reset_progress_excursion_test(update.effective_user.id)
+
         if excursion_test.progress >= len(Test_Excursion.waypoints_array):
             await context.bot.send_message(
                 text=Test_Excursion.finale_message_text,
@@ -134,18 +147,36 @@ class Test_Excursion:
                 reply_markup=ReplyKeyboardRemove()
             )
             db_helper.reset_progress_excursion_test(update.effective_user.id)
-            await Test_Excursion.main_menu(update, context)
+            await Test_Excursion.main_menu(update, context)  # Нужно это исправить
             return ConversationStates.MAIN_MENU
 
         if excursion_test.progress != 0:
-            prev_button_names = Test_Excursion.waypoints_array[excursion_test.progress - 1].buttons_names
-            is_input_incorrect = True
-            for button_name in prev_button_names:
-                if update.message is None or update.message.text == button_name:
-                    is_input_incorrect = False
-                    break
-            if is_input_incorrect:
-                return
+            prev_waypoint = Test_Excursion.waypoints_array[excursion_test.progress - 1]
+            if prev_waypoint.quiz_answer is not None:
+                if update.message is None:
+                    db_helper.decrease_progress_excursion_test(update.effective_user.id)
+                    return await Test_Excursion.process_waypoints(update, context)  # Restart function
+                if update.message.text != prev_waypoint.quiz_answer:
+                    await context.bot.send_message(
+                        text=strings.WRONG_QUIZ_ANSWER_TEXT,
+                        chat_id=update.effective_chat.id,
+                        reply_markup=ReplyKeyboardMarkup([prev_waypoint.buttons_names])
+                    )
+                    return
+                else:
+                    await context.bot.send_message(
+                        text=strings.RIGHT_QUIZ_ANSWER_TEXT,
+                        chat_id=update.effective_chat.id,
+                        reply_markup=ReplyKeyboardRemove()
+                    )
+            else:
+                is_input_incorrect = True
+                for button_name in prev_waypoint.buttons_names:
+                    if update.message is None or update.message.text == button_name:
+                        is_input_incorrect = False
+                        break
+                if is_input_incorrect:
+                    return
 
         button_names = Test_Excursion.waypoints_array[excursion_test.progress].buttons_names
 
@@ -194,5 +225,10 @@ class Test_Excursion:
                                        reply_markup=reply_markup)
         return ConversationStates.MAIN_MENU
 
-# TODO: Сделать механику продолжения и приостановки экскурсии
-# TODO: Сделать механику квиза
+# TODO: Сделать механику продолжения и приостановки экскурсии TODO: Сделать механику квиза TODO: мЕХАНИКА квиза. К
+#  Waypointу добавить параметр quiz = правильный ответ Если quiz=None, значит квиза нет.
+#  При обработке Waypoint, нужно обратиться к предыдущему waypointу и посмотреть его поле quiz. Если quiz != None, Сравнить текст сообщения с
+#  правильным ответом: Если правильно, перейти дальше (progress++), иначе вывести сообщение "Неверный ответ" и повторить.
+
+
+# TODO: При вызове команды \stop нужно уменьшить прогресс экскурсии на 1.

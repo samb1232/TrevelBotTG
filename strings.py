@@ -50,3 +50,6 @@ TARIFF_TWO_TEXT = "Турист"
 TARIFF_THREE_TEXT = "Гуру"
 
 TARIFFS_ARR = [TARIFF_ONE_TEXT, TARIFF_TWO_TEXT, TARIFF_THREE_TEXT]
+
+WRONG_QUIZ_ANSWER_TEXT = "Неправильно. Попробуй ещё раз!"
+RIGHT_QUIZ_ANSWER_TEXT = "Всё правильно, молодец!"
