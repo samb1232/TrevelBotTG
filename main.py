@@ -148,10 +148,12 @@ async def stop_excursion(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     return ConversationHandler.END
 
 
-async def unknown_comand(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def unknown_callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Cancels and ends the conversation."""
-    await context.bot.send_message(text=strings.UNKNOWN_COMMAND_TEXT,
-                                   chat_id=update.effective_chat.id)
+    query = update.callback_query
+    await query.answer()
+    await main_menu(update, context)
+    return ConversationStates.MAIN_MENU
 
 
 def main() -> None:
@@ -160,7 +162,9 @@ def main() -> None:
     application = Application.builder().token(config.API_TOKEN).build()
 
     main_conversation_handler = ConversationHandler(
-        entry_points=[CommandHandler("start", start), MessageHandler(filters.ALL, start)],
+        entry_points=[CommandHandler("start", start),
+                      MessageHandler(filters.ALL, start),
+                      CallbackQueryHandler(unknown_callback_handler)],
         states={
             ConversationStates.MAIN_MENU: [
                 CommandHandler("start", start),
@@ -169,9 +173,9 @@ def main() -> None:
                 MessageHandler(filters.ALL, start)
             ],
             ConversationStates.TEST_EXCURSION: [
-                MessageHandler(filters.TEXT, Test_Excursion.process_waypoints),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, Test_Excursion.process_waypoints),
                 CallbackQueryHandler(Test_Excursion.excursion_buttons_manager),
-
+                CommandHandler("stop", Test_Excursion.stop_excursion)
             ]
         },
         fallbacks=[]
@@ -187,3 +191,4 @@ if __name__ == "__main__":
     main()
 
 # TODO: Сделать систему оповещений о продлении тарифа
+

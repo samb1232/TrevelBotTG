@@ -53,3 +53,6 @@ TARIFFS_ARR = [TARIFF_ONE_TEXT, TARIFF_TWO_TEXT, TARIFF_THREE_TEXT]
 
 WRONG_QUIZ_ANSWER_TEXT = "Неправильно. Попробуй ещё раз!"
 RIGHT_QUIZ_ANSWER_TEXT = "Всё правильно, молодец!"
+
+STOP_EXCURSION_TEXT = ("Хорошо, я сохранил твой прогресс по экскурсии. "
+                       "Ты можешь вернуться и закончить экскурсию в любой момент!")

@@ -225,10 +225,15 @@ class Test_Excursion:
                                        reply_markup=reply_markup)
         return ConversationStates.MAIN_MENU
 
-# TODO: Сделать механику продолжения и приостановки экскурсии TODO: Сделать механику квиза TODO: мЕХАНИКА квиза. К
-#  Waypointу добавить параметр quiz = правильный ответ Если quiz=None, значит квиза нет.
-#  При обработке Waypoint, нужно обратиться к предыдущему waypointу и посмотреть его поле quiz. Если quiz != None, Сравнить текст сообщения с
-#  правильным ответом: Если правильно, перейти дальше (progress++), иначе вывести сообщение "Неверный ответ" и повторить.
+    @staticmethod
+    async def stop_excursion(update: Update, context: ContextTypes.DEFAULT_TYPE):
+        test_excursion = db_helper.get_excursion_test_by_id(update.effective_user.id)
+        if test_excursion.progress > 0:
+            db_helper.decrease_progress_excursion_test(update.effective_user.id)
+        await context.bot.send_message(text=strings.STOP_EXCURSION_TEXT,
+                                       chat_id=update.effective_chat.id)
+        await Test_Excursion.main_menu(update, context)  # Костыль, нужно исправить
+        return ConversationStates.MAIN_MENU
 
-
-# TODO: При вызове команды \stop нужно уменьшить прогресс экскурсии на 1.
+# TODO: Если нажать кнопку "Начать экскурсию" после начала экскурсии, ещё раз выведется waypoint экскурсии.
+#  Так быть не должно
