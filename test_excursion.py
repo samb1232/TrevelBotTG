@@ -12,15 +12,15 @@ logger = logging.getLogger(__name__)
 
 class Test_Excursion:
     preview_image_src: str = "Excursion1/previewImage.jpg"
-    preview_text: str = ("Кто и зачем прорыл подземные ходы под Летним садом, "
+    preview_text: str = ("Пока что есть только одна экскурсия. \n"
+                         "Если хочешь перейти к этой экскурсии, введи команду /testexc!")
+
+    description_text = ("Кто и зачем прорыл подземные ходы под Летним садом, "
                          "какой смысл хотел заложить Петр I в строительство сада, как проходили смотры невест, "
                          "первые признаки феминизма и почему никто не ехал в Петербург? \n"
                          "Ответы на все эти вопросы можно найти прогуливаясь по самой известной зеленой зоне города, "
                          "если знать где и что искать. Сегодня предлагаем раскрыть тайны этого места.\n"
-                         "Если хочешь перейти к этой экскурсии, введи команду /testexc!")
-
-    description_text = ("Кто и зачем прорыл подземные ходы под Летним садом? "
-                        "Сегодня предлагаем раскрыть тайны этого места.")
+                         "Если решишь приостановить экскурсию, введи команду /stop!")
 
     finale_message_text = "Благодарю за это удивительное приключение! Экскурсия окончена. Ещё увидимся!"
 
@@ -43,13 +43,13 @@ class Test_Excursion:
             quiz_answer="Медуза Горгона"
         ),
         Waypoint([
-            Text("Второй этап экскурсии. Описание 2"),
+            Text("Второй этап экскурсии"),
             Audio("Excursion1/T2.m4a")
         ],
             buttons_names=["Дальше"]
         ),
         Waypoint(components=[
-            Text("Третий этап экскурсии. Описание 3"),
+            Text("Третий этап экскурсии"),
             Audio("Excursion1/T3.m4a")
         ],
             buttons_names=["Поехали!"]
@@ -117,9 +117,12 @@ class Test_Excursion:
         await query.answer()
         match query.data:
             case ExcursionButtonStates.MAIN_MENU:
-                pass
+                await Test_Excursion.main_menu(update, context)
             case ExcursionButtonStates.CHOOSE_EXCURSION:
-                pass
+                await context.bot.send_message(
+                    text="Других экскурсий пока что нет",
+                    chat_id=update.effective_chat.id,
+                )
             case ExcursionButtonStates.BEGIN_EXCURSION:
                 is_allowed_for_excursion = await Test_Excursion.check_for_subscription(update, context)
                 if is_allowed_for_excursion:
@@ -228,7 +231,7 @@ class Test_Excursion:
     @staticmethod
     async def stop_excursion(update: Update, context: ContextTypes.DEFAULT_TYPE):
         test_excursion = db_helper.get_excursion_test_by_id(update.effective_user.id)
-        if test_excursion.progress > 0:
+        if test_excursion is not None and test_excursion.progress > 0:
             db_helper.decrease_progress_excursion_test(update.effective_user.id)
         await context.bot.send_message(text=strings.STOP_EXCURSION_TEXT,
                                        chat_id=update.effective_chat.id)

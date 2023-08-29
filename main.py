@@ -152,8 +152,7 @@ async def unknown_callback_handler(update: Update, context: ContextTypes.DEFAULT
     """Cancels and ends the conversation."""
     query = update.callback_query
     await query.answer()
-    await main_menu(update, context)
-    return ConversationStates.MAIN_MENU
+    return await start(update, context)
 
 
 def main() -> None:
