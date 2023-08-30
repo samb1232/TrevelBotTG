@@ -119,7 +119,7 @@ class Test_Excursion:
         # Fix for potential negative progress number
         if excursion_test.progress < 0:
             excursion_test.progress = 0
-            db_helper.reset_progress_excursion_test(update.effective_user.id)
+            db_helper.reset_progress_excursion(update.effective_user.id)
 
         if excursion_test.progress >= len(Test_Excursion.waypoints_array):
             await context.bot.send_message(
@@ -127,7 +127,7 @@ class Test_Excursion:
                 chat_id=update.effective_chat.id,
                 reply_markup=ReplyKeyboardRemove()
             )
-            db_helper.reset_progress_excursion_test(update.effective_user.id)
+            db_helper.reset_progress_excursion(update.effective_user.id)
             await menu_functions.main_menu(update, context)
             return ConversationStates.MAIN_MENU
 
@@ -135,7 +135,7 @@ class Test_Excursion:
             prev_waypoint = Test_Excursion.waypoints_array[excursion_test.progress - 1]
             if prev_waypoint.quiz_answer is not None:
                 if update.message is None:
-                    db_helper.decrease_progress_excursion_test(update.effective_user.id)
+                    db_helper.decrease_progress_excursion(update.effective_user.id)
                     return await Test_Excursion.process_waypoints(update, context)  # Restart function
                 if update.message.text != prev_waypoint.quiz_answer:
                     await context.bot.send_message(
@@ -181,13 +181,13 @@ class Test_Excursion:
                         chat_id=update.effective_chat.id,
                         reply_markup=ReplyKeyboardMarkup([button_names])
                     )
-        db_helper.increase_progress_excursion_test(user_id=update.effective_user.id)
+        db_helper.increase_progress_excursion(user_id=update.effective_user.id)
 
     @staticmethod
     async def stop_excursion(update: Update, context: ContextTypes.DEFAULT_TYPE):
         test_excursion = db_helper.get_excursion_info_by_id(update.effective_user.id)
         if test_excursion is not None and test_excursion.progress > 0:
-            db_helper.decrease_progress_excursion_test(update.effective_user.id)
+            db_helper.decrease_progress_excursion(update.effective_user.id)
         await context.bot.send_message(text=strings.STOP_EXCURSION_TEXT,
                                        chat_id=update.effective_chat.id)
         await menu_functions.main_menu(update, context)

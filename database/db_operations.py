@@ -6,7 +6,6 @@ from sqlalchemy.orm import sessionmaker, Session
 
 import config
 from database.db_base import db_base
-from database.tables.excursion_test import Excursion_test
 from database.tables.users import User
 
 logger = logging.getLogger(__name__)
@@ -29,10 +28,6 @@ class db_helper:
         return db_helper.session.query(User).filter(User.user_id == user_id).first()
 
     @staticmethod
-    def get_excursion_info_by_id(user_id: int) -> Excursion_test | None:
-        return db_helper.session.query(Excursion_test).filter(Excursion_test.user_id == user_id).first()
-
-    @staticmethod
     def add_new_user(user_id: int, subscription_type: int, subscription_end_date: Date, excursions_left: int) -> None:
         new_user = User(user_id, subscription_type, subscription_end_date, excursions_left)
         db_helper.session.add(new_user)
@@ -48,25 +43,29 @@ class db_helper:
         return False
 
     @staticmethod
+    def get_excursion_info_by_id(user_id: int, excursion_class):
+        return db_helper.session.query(excursion_class).filter(excursion_class.user_id == user_id).first()
+
+    @staticmethod
     def add_user_to_excursion(user_id: int, excursion_class) -> None:
         new_user = excursion_class(user_id=user_id, progress=0)
         db_helper.session.add(new_user)
         db_helper.session.commit()
 
     @staticmethod
-    def increase_progress_excursion_test(user_id: int):
-        excursion = db_helper.get_excursion_info_by_id(user_id)
+    def increase_progress_excursion(user_id: int, excursion_class):
+        excursion = db_helper.get_excursion_info_by_id(user_id, excursion_class)
         excursion.progress += 1
         db_helper.session.commit()
 
     @staticmethod
-    def decrease_progress_excursion_test(user_id: int):
-        excursion = db_helper.get_excursion_info_by_id(user_id)
+    def decrease_progress_excursion(user_id: int, excursion_class):
+        excursion = db_helper.get_excursion_info_by_id(user_id, excursion_class)
         excursion.progress -= 1
         db_helper.session.commit()
 
     @staticmethod
-    def reset_progress_excursion_test(user_id: int):
-        excursion = db_helper.get_excursion_info_by_id(user_id)
+    def reset_progress_excursion(user_id: int, excursion_class):
+        excursion = db_helper.get_excursion_info_by_id(user_id, excursion_class)
         excursion.progress = 0
         db_helper.session.commit()
