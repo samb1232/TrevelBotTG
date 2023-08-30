@@ -4,6 +4,7 @@ from sqlite3 import Date
 import sqlalchemy as db
 from sqlalchemy.orm import sessionmaker, Session
 
+import config
 from database.db_base import db_base
 from database.tables.excursion_test import Excursion_test
 from database.tables.users import User
@@ -15,7 +16,7 @@ class db_helper:
     @staticmethod
     def get_database_session() -> Session:
         logger.info("Подключение к базе данных")
-        engine = db.create_engine("sqlite:///testdb.db")
+        engine = db.create_engine(config.DATABASE_ENGINE)
 
         db_base.Base.metadata.create_all(engine)
 
@@ -28,7 +29,7 @@ class db_helper:
         return db_helper.session.query(User).filter(User.user_id == user_id).first()
 
     @staticmethod
-    def get_excursion_test_by_id(user_id: int) -> Excursion_test | None:
+    def get_excursion_info_by_id(user_id: int) -> Excursion_test | None:
         return db_helper.session.query(Excursion_test).filter(Excursion_test.user_id == user_id).first()
 
     @staticmethod
@@ -47,25 +48,25 @@ class db_helper:
         return False
 
     @staticmethod
-    def add_user_to_excursion_test(user_id: int, progress: int) -> None:
-        new_user = Excursion_test(user_id=user_id, progress=progress)
+    def add_user_to_excursion(user_id: int, excursion_class) -> None:
+        new_user = excursion_class(user_id=user_id, progress=0)
         db_helper.session.add(new_user)
         db_helper.session.commit()
 
     @staticmethod
     def increase_progress_excursion_test(user_id: int):
-        excursion = db_helper.get_excursion_test_by_id(user_id)
+        excursion = db_helper.get_excursion_info_by_id(user_id)
         excursion.progress += 1
         db_helper.session.commit()
 
     @staticmethod
     def decrease_progress_excursion_test(user_id: int):
-        excursion = db_helper.get_excursion_test_by_id(user_id)
+        excursion = db_helper.get_excursion_info_by_id(user_id)
         excursion.progress -= 1
         db_helper.session.commit()
 
     @staticmethod
     def reset_progress_excursion_test(user_id: int):
-        excursion = db_helper.get_excursion_test_by_id(user_id)
+        excursion = db_helper.get_excursion_info_by_id(user_id)
         excursion.progress = 0
         db_helper.session.commit()

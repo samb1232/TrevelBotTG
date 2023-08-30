@@ -1,4 +1,4 @@
-class MenuButtonStates:
+class MenuCallbackButtons:
     MAIN_MENU = "main_menu"
     CHOOSE_EXCURSION = "choose_excursion"
     ADDITIONAL_INFORMATION = "additional_information"
@@ -7,7 +7,7 @@ class MenuButtonStates:
     NOT_IMPLEMENTED = "_"
 
 
-class ExcursionButtonStates:
+class ExcursionCallbackButtons:
     MAIN_MENU = "main_menu"
     CHOOSE_EXCURSION = "choose_excursion"
     BEGIN_EXCURSION = "begin_excursion"
