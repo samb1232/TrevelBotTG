@@ -7,7 +7,7 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 import config
 from enumerations import ConversationStates
 from menu_functions import start, unknown_callback_handler, buttons_manager
-from test_excursion import Test_Excursion
+from test_excursion import excursion_test
 
 # Enable logging
 logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO)
@@ -30,13 +30,13 @@ def main() -> None:
             ConversationStates.MAIN_MENU: [
                 CommandHandler("start", start),
                 CallbackQueryHandler(buttons_manager),
-                CommandHandler("testexc", Test_Excursion.description),
+                CommandHandler("testexc", excursion_test.description),
                 MessageHandler(filters.ALL, start)
             ],
             ConversationStates.TEST_EXCURSION: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, Test_Excursion.process_waypoints),
-                CallbackQueryHandler(Test_Excursion.excursion_buttons_manager),
-                CommandHandler("stop", Test_Excursion.stop_excursion)
+                MessageHandler(filters.TEXT & ~filters.COMMAND, excursion_test.process_waypoints),
+                CallbackQueryHandler(excursion_test.excursion_buttons_manager),
+                CommandHandler("stop", excursion_test.stop_excursion)
             ]
         },
         fallbacks=[]
