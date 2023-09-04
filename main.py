@@ -7,12 +7,15 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 import config
 from enumerations import ConversationStates
 from menu_functions import start, unknown_callback_handler, buttons_manager
-from test_excursion import excursion_test
+from test_excursion import excursion_test_1, excursion_test_2
 
 # Enable logging
 logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO)
 # set higher logging level for httpx to avoid all GET and POST requests being logged
 logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("database.db_operations").setLevel(logging.DEBUG)
+logging.getLogger("excursion").setLevel(logging.DEBUG)
+
 
 logger = logging.getLogger(__name__)
 
@@ -30,13 +33,19 @@ def main() -> None:
             ConversationStates.MAIN_MENU: [
                 CommandHandler("start", start),
                 CallbackQueryHandler(buttons_manager),
-                CommandHandler("testexc", excursion_test.description),
+                CommandHandler("testexc1", excursion_test_1.description),
+                CommandHandler("testexc2", excursion_test_2.description),
                 MessageHandler(filters.ALL, start)
             ],
-            ConversationStates.TEST_EXCURSION: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, excursion_test.process_waypoints),
-                CallbackQueryHandler(excursion_test.excursion_buttons_manager),
-                CommandHandler("stop", excursion_test.stop_excursion)
+            ConversationStates.TEST_EXCURSION_1: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, excursion_test_1.process_waypoints),
+                CallbackQueryHandler(excursion_test_1.excursion_callback_buttons_manager),
+                CommandHandler("stop", excursion_test_1.stop_excursion)
+            ],
+            ConversationStates.TEST_EXCURSION_2: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, excursion_test_2.process_waypoints),
+                CallbackQueryHandler(excursion_test_2.excursion_callback_buttons_manager),
+                CommandHandler("stop", excursion_test_2.stop_excursion)
             ]
         },
         fallbacks=[]

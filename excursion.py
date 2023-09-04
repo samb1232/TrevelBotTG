@@ -9,25 +9,28 @@ from database.db_operations import db_helper
 from enumerations import ExcursionCallbackButtons, ConversationStates
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 class Excursion:
 
     def __init__(self, description_text: str, finale_message_text: str, description_image_src: str,
-                 waypoints_array: list, excursion_db_class):
+                 waypoints_array: list, excursion_db_class_name: str, entry_point: int):
         self.description_text = description_text
         self.finale_message_text = finale_message_text
         self.description_image_src = description_image_src
         self.waypoints_array = waypoints_array
-        self.excursion_db_class = excursion_db_class
+        self.excursion_db_class_name = excursion_db_class_name
+        self.entry_point = entry_point  # Это значение из ConversationStates
 
     async def check_for_subscription(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
         # TODO: Сделать корректную проверку на подписку. Сейчас стоит заглушка.
         user = db_helper.get_user_by_id(update.effective_user.id)
-        excursion_test = db_helper.get_excursion_info_by_id(user_id=user.user_id,
-                                                            excursion_class=self.excursion_db_class)
-        if excursion_test is None:
-            db_helper.add_user_to_excursion(user_id=user.user_id, excursion_class=self.excursion_db_class)
+        logger.debug(f"Проверка на валидность подписки у пользователя с id = {user.user_id}")
+        user_progress = db_helper.get_user_progress_on_excursion_by_id(user_id=user.user_id,
+                                                                       excursion_name=self.excursion_db_class_name)
+        if user_progress is None:
+            db_helper.add_user_to_excursion(user_id=user.user_id, excursion_name=self.excursion_db_class_name)
         return True
 
     async def description(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -45,9 +48,9 @@ class Excursion:
                                        chat_id=update.effective_chat.id,
                                        reply_markup=InlineKeyboardMarkup(keyboard)
                                        )
-        return ConversationStates.TEST_EXCURSION
+        return self.entry_point
 
-    async def excursion_buttons_manager(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def excursion_callback_buttons_manager(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Parses the CallbackQuery"""
         query = update.callback_query
         await query.answer()
@@ -56,10 +59,12 @@ class Excursion:
                 await query.message.edit_reply_markup(None)
                 await menu_functions.main_menu(update, context)
             case ExcursionCallbackButtons.CHOOSE_EXCURSION:
-                await context.bot.send_message(
-                    text="Других экскурсий пока что нет",
-                    chat_id=update.effective_chat.id,
-                )
+                # await context.bot.send_message(
+                #     text="Других экскурсий пока что нет",
+                #     chat_id=update.effective_chat.id,
+                # )
+                await menu_functions.choose_excursion(update, context)
+                return ConversationStates.MAIN_MENU
             case ExcursionCallbackButtons.BEGIN_EXCURSION:
                 is_allowed_for_excursion = await self.check_for_subscription(update, context)
                 if is_allowed_for_excursion:
@@ -72,32 +77,33 @@ class Excursion:
                     )
 
     async def process_waypoints(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        excursion_test = db_helper.get_excursion_info_by_id(user_id=update.effective_user.id,
-                                                            excursion_class=self.excursion_db_class)
+        logger.debug(f"Обработка процесса проведения экскурсии {self.excursion_db_class_name}")
+        user_progress = db_helper.get_user_progress_on_excursion_by_id(user_id=update.effective_user.id,
+                                                                       excursion_name=self.excursion_db_class_name)
 
         # Fix for potential negative progress number
-        if excursion_test.progress < 0:
-            excursion_test.progress = 0
+        if user_progress.progress < 0:
+            user_progress.progress = 0
             db_helper.reset_progress_excursion(user_id=update.effective_user.id,
-                                               excursion_class=self.excursion_db_class)
+                                               excursion_name=self.excursion_db_class_name)
 
-        if excursion_test.progress >= len(self.waypoints_array):
+        if user_progress.progress >= len(self.waypoints_array):
             await context.bot.send_message(
                 text=self.finale_message_text,
                 chat_id=update.effective_chat.id,
                 reply_markup=ReplyKeyboardRemove()
             )
             db_helper.reset_progress_excursion(user_id=update.effective_user.id,
-                                               excursion_class=self.excursion_db_class)
+                                               excursion_name=self.excursion_db_class_name)
             await menu_functions.main_menu(update, context)
             return ConversationStates.MAIN_MENU
 
-        if excursion_test.progress != 0:
-            prev_waypoint = self.waypoints_array[excursion_test.progress - 1]
+        if user_progress.progress != 0:
+            prev_waypoint = self.waypoints_array[user_progress.progress - 1]
             if prev_waypoint.quiz_answer is not None:
                 if update.message is None:
                     db_helper.decrease_progress_excursion(user_id=update.effective_user.id,
-                                                          excursion_class=self.excursion_db_class)
+                                                          excursion_name=self.excursion_db_class_name)
                     return await self.process_waypoints(update, context)  # Restart function
                 if update.message.text != prev_waypoint.quiz_answer:
                     await context.bot.send_message(
@@ -121,9 +127,9 @@ class Excursion:
                 if is_input_incorrect:
                     return
 
-        button_names = self.waypoints_array[excursion_test.progress].buttons_names
+        button_names = self.waypoints_array[user_progress.progress].buttons_names
 
-        for component in self.waypoints_array[excursion_test.progress].components:
+        for component in self.waypoints_array[user_progress.progress].components:
             match component.__name__:
                 case "TEXT":
                     await context.bot.send_message(
@@ -144,14 +150,14 @@ class Excursion:
                         reply_markup=ReplyKeyboardMarkup([button_names])
                     )
         db_helper.increase_progress_excursion(user_id=update.effective_user.id,
-                                              excursion_class=self.excursion_db_class)
+                                              excursion_name=self.excursion_db_class_name)
 
     async def stop_excursion(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        test_excursion = db_helper.get_excursion_info_by_id(user_id=update.effective_user.id,
-                                                            excursion_class=self.excursion_db_class)
+        test_excursion = db_helper.get_user_progress_on_excursion_by_id(user_id=update.effective_user.id,
+                                                                        excursion_name=self.excursion_db_class_name)
         if test_excursion is not None and test_excursion.progress > 0:
             db_helper.decrease_progress_excursion(user_id=update.effective_user.id,
-                                                  excursion_class=self.excursion_db_class)
+                                                  excursion_name=self.excursion_db_class_name)
         await context.bot.send_message(text=strings.STOP_EXCURSION_TEXT,
                                        chat_id=update.effective_chat.id)
         await menu_functions.main_menu(update, context)

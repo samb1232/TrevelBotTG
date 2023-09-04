@@ -90,8 +90,9 @@ async def choose_excursion(update: Update, context: ContextTypes.DEFAULT_TYPE):
             InlineKeyboardButton(strings.MAIN_MENU_BUTTON_TEXT, callback_data=MenuCallbackButtons.MAIN_MENU)
         ],
     ]
-    await context.bot.send_message(text=("Пока что есть только одна экскурсия. \n"
-                                         "Если хочешь перейти к этой экскурсии, введи команду /testexc!"),
+    await context.bot.send_message(text=("Пока что есть две экскурсии. \n"
+                                         "Если хочешь перейти к первой экскурсии, введи команду /testexc1!\n"
+                                         "Если хочешь перейти ко второй экскурсии, введи команду /testexc2!\n"),
                                    chat_id=update.effective_chat.id,
                                    reply_markup=InlineKeyboardMarkup(keyboard)
                                    )
