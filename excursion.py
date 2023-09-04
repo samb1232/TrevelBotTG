@@ -84,8 +84,8 @@ class Excursion:
         # Fix for potential negative progress number
         if user_progress.progress < 0:
             user_progress.progress = 0
-            db_helper.reset_progress_excursion(user_id=update.effective_user.id,
-                                               excursion_name=self.excursion_db_class_name)
+            db_helper.reset_user_progress_for_excursion(user_id=update.effective_user.id,
+                                                        excursion_name=self.excursion_db_class_name)
 
         if user_progress.progress >= len(self.waypoints_array):
             await context.bot.send_message(
@@ -93,8 +93,8 @@ class Excursion:
                 chat_id=update.effective_chat.id,
                 reply_markup=ReplyKeyboardRemove()
             )
-            db_helper.reset_progress_excursion(user_id=update.effective_user.id,
-                                               excursion_name=self.excursion_db_class_name)
+            db_helper.reset_user_progress_for_excursion(user_id=update.effective_user.id,
+                                                        excursion_name=self.excursion_db_class_name)
             await menu_functions.main_menu(update, context)
             return ConversationStates.MAIN_MENU
 
@@ -153,9 +153,9 @@ class Excursion:
                                               excursion_name=self.excursion_db_class_name)
 
     async def stop_excursion(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        test_excursion = db_helper.get_user_progress_on_excursion_by_id(user_id=update.effective_user.id,
-                                                                        excursion_name=self.excursion_db_class_name)
-        if test_excursion is not None and test_excursion.progress > 0:
+        user_progress = db_helper.get_user_progress_on_excursion_by_id(user_id=update.effective_user.id,
+                                                                       excursion_name=self.excursion_db_class_name)
+        if user_progress is not None and user_progress.progress > 0:
             db_helper.decrease_progress_excursion(user_id=update.effective_user.id,
                                                   excursion_name=self.excursion_db_class_name)
         await context.bot.send_message(text=strings.STOP_EXCURSION_TEXT,

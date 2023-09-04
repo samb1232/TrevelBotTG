@@ -58,27 +58,27 @@ class db_helper:
         logger.debug(f"Добавление пользователя с id = {user_id} в эксукрсию \"{excursion_name}\"")
         # TODO: Возможно здесь следует осуществить проверку на существование такой строки в таблице.
         #  При нынешней реализации вызовется ошибка добавления поля.
-        new_user = UserProgress(user_id=user_id, excursion_name=excursion_name, progress=0)
-        db_helper.session.add(new_user)
+        new_user_progress = UserProgress(user_id=user_id, excursion_name=excursion_name, progress=0)
+        db_helper.session.add(new_user_progress)
         db_helper.session.commit()
 
     @staticmethod
     def increase_progress_excursion(user_id: int, excursion_name: str):
         logger.debug(f"Инкремент прогресса экскурсии \"{excursion_name}\" для пользователя с id = {user_id}")
-        excursion = db_helper.get_user_progress_on_excursion_by_id(user_id, excursion_name)
-        excursion.progress += 1
+        user_progress = db_helper.get_user_progress_on_excursion_by_id(user_id, excursion_name)
+        user_progress.progress += 1
         db_helper.session.commit()
 
     @staticmethod
     def decrease_progress_excursion(user_id: int, excursion_name: str):
         logger.debug(f"Декремент прогресса экскурсии \"{excursion_name}\" для пользователя с id = {user_id}")
-        excursion = db_helper.get_user_progress_on_excursion_by_id(user_id, excursion_name)
-        excursion.progress -= 1
+        user_progress = db_helper.get_user_progress_on_excursion_by_id(user_id, excursion_name)
+        user_progress.progress -= 1
         db_helper.session.commit()
 
     @staticmethod
-    def reset_progress_excursion(user_id: int, excursion_name: str):
+    def reset_user_progress_for_excursion(user_id: int, excursion_name: str):
         logger.debug(f"Сброс прогресса экскурсии \"{excursion_name}\" для пользователя с id = {user_id}")
-        excursion = db_helper.get_user_progress_on_excursion_by_id(user_id, excursion_name)
-        excursion.progress = 0
+        user_progress = db_helper.get_user_progress_on_excursion_by_id(user_id, excursion_name)
+        user_progress.progress = 0
         db_helper.session.commit()
