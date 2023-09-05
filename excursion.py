@@ -1,3 +1,4 @@
+import datetime
 import logging
 
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove
@@ -30,8 +31,17 @@ class Excursion:
         user_progress = db_helper.get_user_progress_on_excursion_by_id(user_id=user.user_id,
                                                                        excursion_name=self.excursion_db_class_name)
         if user_progress is None:
-            db_helper.add_user_to_excursion(user_id=user.user_id, excursion_name=self.excursion_db_class_name)
-        return True
+            if (user.subscription_type != -1
+                    and user.excursions_left > 0
+                    and user.subscription_end_date > datetime.date.today()):
+                db_helper.add_user_to_excursion(user_id=user.user_id, excursion_name=self.excursion_db_class_name)
+                return True
+            else:
+                return False
+        elif user.subscription_end_date > datetime.date.today():
+            return True
+        else:
+            return False
 
     async def description(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         keyboard = [
@@ -59,10 +69,6 @@ class Excursion:
                 await query.message.edit_reply_markup(None)
                 await menu_functions.main_menu(update, context)
             case ExcursionCallbackButtons.CHOOSE_EXCURSION:
-                # await context.bot.send_message(
-                #     text="Других экскурсий пока что нет",
-                #     chat_id=update.effective_chat.id,
-                # )
                 await menu_functions.choose_excursion(update, context)
                 return ConversationStates.MAIN_MENU
             case ExcursionCallbackButtons.BEGIN_EXCURSION:
@@ -70,11 +76,13 @@ class Excursion:
                 if is_allowed_for_excursion:
                     await self.process_waypoints(update, context)
                 else:
-                    # TODO: Доработать функцию оплаты
+                    # TODO: После проверки на подписку, если отправить сообщение, вылезет ошибка NonType
                     await context.bot.send_message(
                         text="А где деньги? плоти",
                         chat_id=update.effective_chat.id,
                     )
+                    await menu_functions.main_menu(update, context)
+                    return ConversationStates.MAIN_MENU
 
     async def process_waypoints(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         logger.debug(f"Обработка процесса проведения экскурсии {self.excursion_db_class_name}")

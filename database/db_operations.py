@@ -55,9 +55,9 @@ class db_helper:
 
     @staticmethod
     def add_user_to_excursion(user_id: int, excursion_name: str) -> None:
-        logger.debug(f"Добавление пользователя с id = {user_id} в эксукрсию \"{excursion_name}\"")
-        # TODO: Возможно здесь следует осуществить проверку на существование такой строки в таблице.
-        #  При нынешней реализации вызовется ошибка добавления поля.
+        if db_helper.get_user_progress_on_excursion_by_id(user_id, excursion_name) is not None:
+            return  # Можно вызвать предупреждение о попытке добавления существующего пользователя
+        logger.debug(f"Добавление пользователя с id = {user_id} в экскурсию \"{excursion_name}\"")
         new_user_progress = UserProgress(user_id=user_id, excursion_name=excursion_name, progress=0)
         db_helper.session.add(new_user_progress)
         db_helper.session.commit()

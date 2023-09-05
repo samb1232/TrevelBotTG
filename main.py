@@ -6,7 +6,7 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 
 import config
 from enumerations import ConversationStates
-from menu_functions import start, unknown_callback_handler, buttons_manager
+from menu_functions import start, unknown_callback_handler, callback_buttons_manager
 from test_excursion import excursion_test_1, excursion_test_2
 
 # Enable logging
@@ -32,7 +32,7 @@ def main() -> None:
         states={
             ConversationStates.MAIN_MENU: [
                 CommandHandler("start", start),
-                CallbackQueryHandler(buttons_manager),
+                CallbackQueryHandler(callback_buttons_manager),
                 CommandHandler("testexc1", excursion_test_1.description),
                 CommandHandler("testexc2", excursion_test_2.description),
                 MessageHandler(filters.ALL, start)

@@ -59,10 +59,11 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     return ConversationStates.MAIN_MENU
 
 
-async def buttons_manager(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def callback_buttons_manager(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Parses the CallbackQuery"""
     query = update.callback_query
     await query.answer()
+    await query.message.edit_reply_markup(None)
     match query.data:
         case MenuCallbackButtons.MAIN_MENU:
             await main_menu(update, context)
