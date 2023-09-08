@@ -47,8 +47,6 @@ class db_helper:
         user.excursions_left = excursions_left
         db_helper.session.commit()
 
-        #  TODO: сделать оповещение пользователя об окончании действия подписки
-
     @staticmethod
     def decrease_excursions_left(user_id: int) -> bool:
         logger.debug(f"Уменьшение доступных экскурсий пользователя с id = {user_id}")
