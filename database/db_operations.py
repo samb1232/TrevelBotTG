@@ -62,10 +62,20 @@ class db_helper:
     @staticmethod
     def get_user_progress_on_excursion_by_id(user_id: int, excursion_name: str) -> UserProgress | None:
         logger.debug(f"Получение прогресса экскурсии \"{excursion_name}\" у пользователя с id = {user_id}")
-        user_progress = db_helper.session.query(UserProgress).filter(UserProgress.user_id == user_id).filter(UserProgress.excursion_name == excursion_name).first()
-        if user_progress is not None:
-            logger.debug(f"Given excursion: {excursion_name}, Real excursion: {user_progress.excursion_name}, progress: {user_progress.progress}")
+        user_progress = (db_helper.session.query(UserProgress)
+                         .filter(UserProgress.user_id == user_id)
+                         .filter(UserProgress.excursion_name == excursion_name)
+                         .first())
         return user_progress
+
+    @staticmethod
+    def get_user_allowed_excursions(user_id: int):
+        logger.debug(f"Получение открытых экскурсий у пользователя с id = {user_id}")
+        user_allowed_excursions = [
+            exc_progress.excursion_name
+            for exc_progress in db_helper.session.query(UserProgress).filter(UserProgress.user_id == user_id).all()]
+        logger.debug(f"{user_allowed_excursions}")
+        return user_allowed_excursions
 
     @staticmethod
     def add_user_to_excursion(user_id: int, excursion_name: str) -> None:

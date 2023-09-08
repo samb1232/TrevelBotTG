@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
     if db_helper.get_user_by_id(update.effective_user.id) is None:
-        logger.info("Добавление нового пользователя в базу данных")
+        logger.info(f"Добавление нового пользователя {update.effective_user.name} в базу данных")
 
         db_helper.add_new_user(
             user_id=update.effective_user.id,
@@ -32,7 +32,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         await update.message.reply_text(strings.GREETING_TEXT, reply_markup=reply_markup)
         return ConversationStates.MAIN_MENU
     else:
-        logger.info("Пользователь обнаружен в базе данных")
+        logger.debug("Пользователь обнаружен в базе данных")
         return await main_menu(update, context)
 
 
@@ -116,9 +116,18 @@ async def get_tariff_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif user.subscription_end_date < datetime.date.today():
         text = strings.TARIFF_EXPIRES_TEXT
     else:
+        user_allowed_excursions = db_helper.get_user_allowed_excursions(update.effective_user.id)
+
+        if len(user_allowed_excursions) == 0:
+            allowed_excursions = ""
+        else:
+            allowed_excursions = strings.ALLOWED_EXCURSIONS_TEXT
+            for exc_name in user_allowed_excursions:
+                allowed_excursions += "  👉 " + exc_name + "\n"
         text = (strings.TARIFF_INFO_TEXT_ARR[0] + strings.TARIFFS_ARR[user.subscription_type] +
                 strings.TARIFF_INFO_TEXT_ARR[1] + user.subscription_end_date.strftime('%Y-%m-%d') +
-                strings.TARIFF_INFO_TEXT_ARR[2] + str(user.excursions_left))
+                strings.TARIFF_INFO_TEXT_ARR[2] + str(user.excursions_left) + "\n" + allowed_excursions)
+
     await context.bot.send_message(text=text,
                                    chat_id=update.effective_chat.id,
                                    reply_markup=reply_markup)
@@ -195,7 +204,7 @@ async def additional_information(update: Update, context: ContextTypes.DEFAULT_T
         ],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await context.bot.send_message(text=strings.ADDITIONAL_TEXT,
+    await context.bot.send_message(text=strings.ADDITIONAL_INFO_TEXT,
                                    chat_id=update.effective_chat.id,
                                    reply_markup=reply_markup)
 
