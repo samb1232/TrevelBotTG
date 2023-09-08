@@ -16,12 +16,12 @@ logger.setLevel(logging.DEBUG)
 class Excursion:
 
     def __init__(self, description_text: str, finale_message_text: str, description_image_src: str,
-                 waypoints_array: list, excursion_db_class_name: str, entry_point: int):
+                 waypoints_array: list, excursion_name: str, entry_point: int):
         self.description_text = description_text
         self.finale_message_text = finale_message_text
         self.description_image_src = description_image_src
         self.waypoints_array = waypoints_array
-        self.excursion_db_class_name = excursion_db_class_name
+        self.excursion_name = excursion_name
         self.entry_point = entry_point  # Это значение из ConversationStates
 
     async def check_for_subscription(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
@@ -29,12 +29,12 @@ class Excursion:
         user = db_helper.get_user_by_id(update.effective_user.id)
         logger.debug(f"Проверка на валидность подписки у пользователя с id = {user.user_id}")
         user_progress = db_helper.get_user_progress_on_excursion_by_id(user_id=user.user_id,
-                                                                       excursion_name=self.excursion_db_class_name)
+                                                                       excursion_name=self.excursion_name)
         if user_progress is None:
             if (user.subscription_type != -1
                     and user.excursions_left > 0
                     and user.subscription_end_date > datetime.date.today()):
-                db_helper.add_user_to_excursion(user_id=user.user_id, excursion_name=self.excursion_db_class_name)
+                db_helper.add_user_to_excursion(user_id=user.user_id, excursion_name=self.excursion_name)
                 return True
             else:
                 return False
@@ -85,15 +85,15 @@ class Excursion:
                     return ConversationStates.MAIN_MENU
 
     async def process_waypoints(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        logger.debug(f"Обработка процесса проведения экскурсии {self.excursion_db_class_name}")
+        logger.debug(f"Обработка процесса проведения экскурсии {self.excursion_name}")
         user_progress = db_helper.get_user_progress_on_excursion_by_id(user_id=update.effective_user.id,
-                                                                       excursion_name=self.excursion_db_class_name)
+                                                                       excursion_name=self.excursion_name)
 
         # Fix for potential negative progress number
         if user_progress.progress < 0:
             user_progress.progress = 0
             db_helper.reset_user_progress_for_excursion(user_id=update.effective_user.id,
-                                                        excursion_name=self.excursion_db_class_name)
+                                                        excursion_name=self.excursion_name)
 
         if user_progress.progress >= len(self.waypoints_array):
             await context.bot.send_message(
@@ -102,7 +102,7 @@ class Excursion:
                 reply_markup=ReplyKeyboardRemove()
             )
             db_helper.reset_user_progress_for_excursion(user_id=update.effective_user.id,
-                                                        excursion_name=self.excursion_db_class_name)
+                                                        excursion_name=self.excursion_name)
             await menu_functions.main_menu(update, context)
             return ConversationStates.MAIN_MENU
 
@@ -111,7 +111,7 @@ class Excursion:
             if prev_waypoint.quiz_answer is not None:
                 if update.message is None:
                     db_helper.decrease_progress_excursion(user_id=update.effective_user.id,
-                                                          excursion_name=self.excursion_db_class_name)
+                                                          excursion_name=self.excursion_name)
                     return await self.process_waypoints(update, context)  # Restart function
                 if update.message.text != prev_waypoint.quiz_answer:
                     await context.bot.send_message(
@@ -158,14 +158,14 @@ class Excursion:
                         reply_markup=ReplyKeyboardMarkup([button_names])
                     )
         db_helper.increase_progress_excursion(user_id=update.effective_user.id,
-                                              excursion_name=self.excursion_db_class_name)
+                                              excursion_name=self.excursion_name)
 
     async def stop_excursion(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_progress = db_helper.get_user_progress_on_excursion_by_id(user_id=update.effective_user.id,
-                                                                       excursion_name=self.excursion_db_class_name)
+                                                                       excursion_name=self.excursion_name)
         if user_progress is not None and user_progress.progress > 0:
             db_helper.decrease_progress_excursion(user_id=update.effective_user.id,
-                                                  excursion_name=self.excursion_db_class_name)
+                                                  excursion_name=self.excursion_name)
         await context.bot.send_message(text=strings.STOP_EXCURSION_TEXT,
                                        chat_id=update.effective_chat.id,
                                        reply_markup=ReplyKeyboardRemove())
