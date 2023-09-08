@@ -65,4 +65,4 @@ RIGHT_QUIZ_ANSWER_TEXT: str = "Всё правильно, молодец!"
 STOP_EXCURSION_TEXT: str = ("Хорошо, я сохранил твой прогресс по экскурсии. "
                             "Ты можешь вернуться и закончить экскурсию в любой момент!")
 
-ALLOWED_EXCURSIONS_TEXT: str = " Открытые экскурсии: \n"
+ALLOWED_EXCURSIONS_TEXT: str = "▪️ Открытые экскурсии: \n"
