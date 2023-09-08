@@ -2,8 +2,11 @@ class MenuCallbackButtons:
     MAIN_MENU = "main_menu"
     CHOOSE_EXCURSION = "choose_excursion"
     ADDITIONAL_INFORMATION = "additional_information"
-    TARIFFS = "tariffs"
     GET_STATUS = "get_status"
+    TARIFFS = "tariffs"
+    TARIFF_LOW = "tariff_low"
+    TARIFF_MID = "tariff_mid"
+    TARIFF_HIGH = "tariff_high"
     NOT_IMPLEMENTED = "_"
 
 

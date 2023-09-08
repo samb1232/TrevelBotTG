@@ -167,6 +167,7 @@ class Excursion:
             db_helper.decrease_progress_excursion(user_id=update.effective_user.id,
                                                   excursion_name=self.excursion_db_class_name)
         await context.bot.send_message(text=strings.STOP_EXCURSION_TEXT,
-                                       chat_id=update.effective_chat.id)
+                                       chat_id=update.effective_chat.id,
+                                       reply_markup=ReplyKeyboardRemove())
         await menu_functions.main_menu(update, context)
         return ConversationStates.MAIN_MENU

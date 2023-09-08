@@ -12,7 +12,6 @@ logger = logging.getLogger(__name__)
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Send a message when the command /start is issued."""
 
     if db_helper.get_user_by_id(update.effective_user.id) is None:
         logger.info("Добавление нового пользователя в базу данных")
@@ -71,10 +70,16 @@ async def callback_buttons_manager(update: Update, context: ContextTypes.DEFAULT
             await choose_excursion(update, context)
         case MenuCallbackButtons.ADDITIONAL_INFORMATION:
             await additional_information(update, context)
-        case MenuCallbackButtons.TARIFFS:
-            await tariffs(update, context)
         case MenuCallbackButtons.GET_STATUS:
             await get_tariff_status(update, context)
+        case MenuCallbackButtons.TARIFFS:
+            await tariffs(update, context)
+        case MenuCallbackButtons.TARIFF_LOW:
+            await tariff_low(update, context)
+        case MenuCallbackButtons.TARIFF_MID:
+            await tariff_mid(update, context)
+        case MenuCallbackButtons.TARIFF_HIGH:
+            await tariff_high(update, context)
         case MenuCallbackButtons.NOT_IMPLEMENTED:
             await context.bot.send_message(text="Данная функция находится в разработке...",
                                            chat_id=update.effective_chat.id)
@@ -119,6 +124,70 @@ async def get_tariff_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                    reply_markup=reply_markup)
 
 
+async def tariffs(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    keyboard = [
+        [
+            InlineKeyboardButton(strings.TARIFF_LOW_TEXT, callback_data=MenuCallbackButtons.TARIFF_LOW),
+            InlineKeyboardButton(strings.TARIFF_MID_TEXT, callback_data=MenuCallbackButtons.TARIFF_MID),
+            InlineKeyboardButton(strings.TARIFF_HIGH_TEXT, callback_data=MenuCallbackButtons.TARIFF_HIGH)
+        ],
+        [
+            InlineKeyboardButton(strings.MAIN_MENU_BUTTON_TEXT, callback_data=MenuCallbackButtons.MAIN_MENU)
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await context.bot.send_photo(chat_id=update.effective_chat.id, photo="src/tariffs.png")
+    await context.bot.send_message(text=strings.TARIFFS_TEXT,
+                                   chat_id=update.effective_chat.id,
+                                   reply_markup=reply_markup)
+
+
+async def tariff_low(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    reply_markup = InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton(strings.MAIN_MENU_BUTTON_TEXT, callback_data=MenuCallbackButtons.MAIN_MENU)
+        ],
+    ])
+    db_helper.set_subscription_to_user(user_id=update.effective_user.id,
+                                       subscription_type=0,
+                                       subscription_end_date=datetime.date.today() + datetime.timedelta(days=30),
+                                       excursions_left=1)
+    await context.bot.send_message(text=strings.TARIFF_LOW_SUCCESS_TEXT,
+                                   chat_id=update.effective_chat.id,
+                                   reply_markup=reply_markup)
+
+
+async def tariff_mid(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    reply_markup = InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton(strings.MAIN_MENU_BUTTON_TEXT, callback_data=MenuCallbackButtons.MAIN_MENU)
+        ],
+    ])
+    db_helper.set_subscription_to_user(user_id=update.effective_user.id,
+                                       subscription_type=1,
+                                       subscription_end_date=datetime.date.today() + datetime.timedelta(days=30),
+                                       excursions_left=3)
+
+    await context.bot.send_message(text=strings.TARIFF_MID_SUCCESS_TEXT,
+                                   chat_id=update.effective_chat.id,
+                                   reply_markup=reply_markup)
+
+
+async def tariff_high(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    reply_markup = InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton(strings.MAIN_MENU_BUTTON_TEXT, callback_data=MenuCallbackButtons.MAIN_MENU)
+        ],
+    ])
+    db_helper.set_subscription_to_user(user_id=update.effective_user.id,
+                                       subscription_type=2,
+                                       subscription_end_date=datetime.date.today() + datetime.timedelta(days=90),
+                                       excursions_left=5)
+    await context.bot.send_message(text=strings.TARIFF_HIGH_SUCCESS_TEXT,
+                                   chat_id=update.effective_chat.id,
+                                   reply_markup=reply_markup)
+
+
 async def additional_information(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
         [
@@ -127,25 +196,6 @@ async def additional_information(update: Update, context: ContextTypes.DEFAULT_T
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await context.bot.send_message(text=strings.ADDITIONAL_TEXT,
-                                   chat_id=update.effective_chat.id,
-                                   reply_markup=reply_markup)
-
-
-async def tariffs(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # TODO: Реализовать систему тарифов (после оплаты)
-    keyboard = [
-        [
-            InlineKeyboardButton(strings.TARIFF_ONE_TEXT, callback_data=MenuCallbackButtons.NOT_IMPLEMENTED),
-            InlineKeyboardButton(strings.TARIFF_TWO_TEXT, callback_data=MenuCallbackButtons.NOT_IMPLEMENTED),
-            InlineKeyboardButton(strings.TARIFF_THREE_TEXT, callback_data=MenuCallbackButtons.NOT_IMPLEMENTED)
-        ],
-        [
-            InlineKeyboardButton(strings.MAIN_MENU_BUTTON_TEXT, callback_data=MenuCallbackButtons.MAIN_MENU)
-        ]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    await context.bot.send_photo(chat_id=update.effective_chat.id, photo="tariffs.png")
-    await context.bot.send_message(text=strings.TARIFFS_TEXT,
                                    chat_id=update.effective_chat.id,
                                    reply_markup=reply_markup)
 
