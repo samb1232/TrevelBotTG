@@ -25,7 +25,6 @@ class Excursion:
         self.entry_point = entry_point  # Это значение из ConversationStates
 
     async def check_for_subscription(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
-        # TODO: Сделать корректную проверку на подписку. Сейчас стоит заглушка.
         user = db_helper.get_user_by_id(update.effective_user.id)
         logger.debug(f"Проверка на валидность подписки у пользователя с id = {user.user_id}")
         user_progress = db_helper.get_user_progress_on_excursion_by_id(user_id=user.user_id,
@@ -76,9 +75,8 @@ class Excursion:
                 if is_allowed_for_excursion:
                     await self.process_waypoints(update, context)
                 else:
-                    # TODO: После проверки на подписку, если отправить сообщение, вылезет ошибка NonType
                     await context.bot.send_message(
-                        text="А где деньги? плоти",
+                        text=strings.NOT_ALLOWED_FOR_EXCURSION_TEXT,
                         chat_id=update.effective_chat.id,
                     )
                     await menu_functions.main_menu(update, context)
