@@ -12,7 +12,6 @@ logger = logging.getLogger(__name__)
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-
     if db_helper.get_user_by_id(update.effective_user.id) is None:
         logger.info(f"Добавление нового пользователя {update.effective_user.name} в базу данных")
 
@@ -164,6 +163,9 @@ async def tariff_low(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(text=strings.TARIFF_LOW_SUCCESS_TEXT,
                                    chat_id=update.effective_chat.id,
                                    reply_markup=reply_markup)
+    await set_reminder(chat_id=update.effective_chat.id,
+                       time_in_days=30,
+                       context=context)
 
 
 async def tariff_mid(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -180,6 +182,9 @@ async def tariff_mid(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(text=strings.TARIFF_MID_SUCCESS_TEXT,
                                    chat_id=update.effective_chat.id,
                                    reply_markup=reply_markup)
+    await set_reminder(chat_id=update.effective_chat.id,
+                       time_in_days=30,
+                       context=context)
 
 
 async def tariff_high(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -195,9 +200,12 @@ async def tariff_high(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(text=strings.TARIFF_HIGH_SUCCESS_TEXT,
                                    chat_id=update.effective_chat.id,
                                    reply_markup=reply_markup)
+    await set_reminder(chat_id=update.effective_chat.id,
+                       time_in_days=90,
+                       context=context)
 
 
-async def additional_information(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def additional_information(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     keyboard = [
         [
             InlineKeyboardButton(strings.MAIN_MENU_BUTTON_TEXT, callback_data=MenuCallbackButtons.MAIN_MENU)
@@ -210,13 +218,33 @@ async def additional_information(update: Update, context: ContextTypes.DEFAULT_T
 
 
 async def stop_excursion(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Cancels and ends the conversation."""
     await main_menu(update, context)
     return ConversationHandler.END
 
 
-async def unknown_callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Cancels and ends the conversation."""
+async def unknown_callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
     return await start(update, context)
+
+
+async def send_excursion_expired_reminder(context: ContextTypes.DEFAULT_TYPE) -> None:
+    job = context.job
+    await context.bot.send_message(chat_id=job.chat_id, text=strings.TARIFF_EXPIRED_TEXT)
+
+
+def remove_job_if_exists(name: str, context: ContextTypes.DEFAULT_TYPE) -> None:
+    current_jobs = context.job_queue.get_jobs_by_name(name)
+    if not current_jobs:
+        return
+    for job in current_jobs:
+        job.schedule_removal()
+
+
+async def set_reminder(chat_id: int, time_in_days: int, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Add a job to the queue."""
+
+    remove_job_if_exists(str(chat_id), context)
+    context.job_queue.run_once(callback=send_excursion_expired_reminder,
+                               when=datetime.timedelta(days=time_in_days),
+                               chat_id=chat_id, name=str(chat_id))
