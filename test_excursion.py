@@ -54,7 +54,7 @@ excursion_test_1 = Excursion(description_text=
                                  ],
                                      buttons_names=["Спасибо за экскурсию!"]
                                  )],
-                             excursion_db_class_name="excursion_test_1",
+                             excursion_name="Тайны петербурга: экскурсия 1",
                              entry_point=ConversationStates.TEST_EXCURSION_1)
 
 excursion_test_2 = Excursion(description_text=
@@ -101,5 +101,5 @@ excursion_test_2 = Excursion(description_text=
                                  ],
                                      buttons_names=["Спасибо за экскурсию!"]
                                  )],
-                             excursion_db_class_name="excursion_test_2",
+                             excursion_name="Тестовая экскурсия 2",
                              entry_point=ConversationStates.TEST_EXCURSION_2)
